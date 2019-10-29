@@ -1,13 +1,22 @@
-                Kind Request about Changes,
-                    in addition to GPL-3
+Visualization, Quality and Statistics for Ribosome Profiling
 
-Anyone changing code from this package is kindly asked to do so in a 
-minimal and well-commented way. The qualification "minimal" means here 
-adding as few as possible new variables, structures or additional 
-elements of code. The qualification "well-commented" means here :
-(1) including or complementing a header which defines inputs, outputs,
-parameters and important variables, 
-(2) using clear and unambigous names as far as possible, writing
-comments everywhere necessary, so that a reuse of the changed code
-stays fairly accessible to others.
+Version: 1.0
+Author: Carine Legrand <c.legrand@dkfz.de>
+Maintainer: Carine Legrand <c.legrand@dkfz.de>
+
+Description: 
+  Ribosomes translate messenger RNAs (mRNAs) into proteins, and 
+  ribosome profiling technique allows to retrieve those mRNAs fragments which are 
+  under active translation in a ribosome. These mRNA fragments are then generally
+  sequenced and further analysed for codon enrichment, translation efficiency, etc.
+  In this package we provide tools to compute and visualize results, perform 
+  quality control, and derive an unbiased estimate of codon enrichment. 
+  We offer the user a webpage view to scan own data on the following aspects: 
+  periodicity, ligation and digestion of ribosome-protected footprints;
+  reproducibility and batch effects of replicates; drugs-related artifacts;
+  codon enrichment including variability observed between mRNAs and positions
+  for ribosome acceptor, peptidyl and exit (A, P and E, respectively) sites ;
+  mining of causal or confounding factors. 
+
+
 
