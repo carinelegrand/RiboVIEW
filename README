@@ -1,0 +1,13 @@
+                Kind Request about Changes,
+                    in addition to GPL-3
+
+Anyone changing code from this package is kindly asked to do so in a 
+minimal and well-commented way. The qualification "minimal" means here 
+adding as few as possible new variables, structures or additional 
+elements of code. The qualification "well-commented" means here :
+(1) including or complementing a header which defines inputs, outputs,
+parameters and important variables, 
+(2) using clear and unambigous names as far as possible, writing
+comments everywhere necessary, so that a reuse of the changed code
+stays fairly accessible to others.
+

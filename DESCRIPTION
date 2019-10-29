@@ -1,0 +1,28 @@
+Package: RiboVIEW
+Title: Visualization, Quality and Statistics for Ribosome Profiling
+Version: 1.0
+Author: Carine Legrand <c.legrand@dkfz.de>
+Maintainer: Carine Legrand <c.legrand@dkfz.de>
+Description: Ribosomes translate messenger RNAs (mRNAs) into proteins, and 
+  ribosome profiling technique allows to retrieve those mRNAs fragments which are 
+  under active translation in a ribosome. These mRNA fragments are then generally
+  sequenced and further analysed for codon enrichment, translation efficiency, etc.
+  In this package we provide tools to compute and visualize results, perform 
+  quality control, and derive an unbiased estimate of codon enrichment. 
+  We offer the user a webpage view to scan own data on the following aspects: 
+  periodicity, ligation and digestion of ribosome-protected footprints;
+  reproducibility and batch effects of replicates; drugs-related artifacts;
+  codon enrichment including variability observed between mRNAs and positions
+  for ribosome acceptor, peptidyl and exit (A, P and E, respectively) sites ;
+  mining of causal or confounding factors. 
+Date: 2019-10-26
+Depends: R (>= 3.4.4)
+Imports: PythonInR, MASS, graphics, stats, utils, ggplot2, grid,
+        gridExtra, parallel, tseriesChaos, png, tsne, gplots,
+        dendextend, VennDiagram, RColorBrewer, grDevices, latex2exp,
+        R.devices
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+NeedsCompilation: no
+Packaged: 2019-10-28 19:49:54 UTC; clegrand

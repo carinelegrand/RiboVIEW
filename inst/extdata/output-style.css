@@ -1,0 +1,192 @@
+<style type="text/css">
+                                                                                /* Style haut et bas de page */
+      #header{
+              position: fixed;
+				      background-color: #ffffff;
+				      width:100%;
+				      height:80px; /*120px;*/
+				      top: 0;
+				      color: black;
+				      z-index:100;
+              text-align: center;
+			      }		
+			
+      #footer{
+              position: fixed;
+				      background-color: #FBFCFA;
+				      width:100%;
+				      height:25px;
+				      bottom: 0;
+				      color: #5A5E6B;
+				      z-index:100;
+              text-align: center;
+			      }
+			
+      p {
+        font-family: helvetica;
+        color: #606060;
+	      margin: 0 42px 0 0; /*0.6em 0;*/
+	
+      }
+
+                                                                                /* Style Titre */
+      .riboview {
+        line-height: 30px; /*48px;*/
+        color: #5A5E6B;
+	      font-weight: bold;
+	      font-family: helvetica;
+	      text-decoration: none;
+	      font-size: 36px;
+      }
+
+                                                                                /* Style boutons de catégorie */
+      #my_centered_buttons { 
+          position: relative; 
+          top: 9px; 
+          display: flex; 
+          justify-content: center; }
+      
+      .button {
+          background-color: #FBFCFA ;
+          color: #5A5E6B;
+          padding: 5px 10px; 
+          text-align: center;
+          text-decoration: none;
+          font-size: 16px;
+          margin: 4px 2px;
+          cursor: pointer;
+          width: 200px;
+          float: left;
+          border: 2px solid #EFEFEF ;/*rgb(108, 63, 100) #096A09; */
+          border-radius: 10px;                                                     /* Bords arrondis */
+      }
+      .button.btn1 {background-image: linear-gradient(to right, #fec7b7 0%, #dbd0fe 140%, #f6d365 180%)}
+      .button.btn2 {background-image: linear-gradient(to right, #e2fcb5 0%, #feefe6 140%, #84fab0 150%);}
+      .button.btn3 {background-image: linear-gradient(to right, #fbc2eb 0%, #ced4e0 140%, #fbc2eb 170%);}
+      .button.btn4 {background-image: linear-gradient(to right, #a1c4fd 0%, #c2e9fb 95%, #a1c4fd 105%);}
+      .button.btn5 {background-image: linear-gradient(to right, #ffecd2 0%, #fcb69f 95%, #ffecd2 105%);}
+      /*btn5 like activated tab : .button.btn5 {background-image: linear-gradient(to right, #f6d365 0%, #fda085 100%);}*/
+
+      .StyleButton {
+	      color: #000000;
+	      font-weight: bold;
+	      font-family: helvetica;
+	      text-decoration: none;
+	      font-size: 18px;
+        /*width: 150px;
+        height: 10px;    */
+      }
+
+                                                                                /* Style texte dans accordéon */
+      .StyleD {
+	      color: #303030;
+	      font-family: helvetica;
+	      text-decoration: none;
+      }
+
+                                                                                /**** Accordion style for radio buttons form*/
+        form { 
+            position: relative; 
+            top: -5px; /*40px;                                                     /* Distance from top */
+            /*left: 100px; */                                                      /* center in div tag */
+            background: -webkit-linear-gradient(bottom,#eaeaea, #fafafa);          /* Background color gradient */
+            padding: 10px;
+            display: inline-block;
+            box-shadow: 0 1px 1px rgba(0,0,0,.65);
+            border-radius: 3px;
+            border: solid 1px #ddd;
+            width: 95%; /*80%;*/                                                    /* Size of outer form box*/
+            min-width: 1025px; /*800px;*/
+            max-width: 1700px; /*1500px;*/
+            height: 500px; /*550px; /*200px;*/
+            overflow: hidden;
+            border-radius: 10px;
+        }
+        input { display: none; }
+                                                                                   /* Style of selected acordion bar */
+        input:checked + label, label:hover { 
+            background: #fda085; /*#4D90FE;*/                                         /* Label background color fall-back (if gradient nok) */
+            /* gradient color of label when selected */
+            /*background-image: linear-gradient(to right, #f6d365 0%, #fda085 51%, #f6d365 100%)*/
+            background: -webkit-linear-gradient(top, #f6d365 0%, #fda085 100%); /*#9A9EAB, #DADEEB); */              /* Label background color gradient */
+            /*background: -webkit-linear-gradient(top,  #5A5E6B, #BBD2E1); /*#4D90FE);*/
+            /*background: -webkit-linear-gradient(top,  #26619C, #5573AF); /*#4D90FE);*/
+            border: solid 1px rgba(0,0,0,.15);
+            color: #5A5E6B; /*white; */
+            box-shadow: 0 1px 1px rgba(0,0,0,.65), 0 1px 0 rgba(255,255,255,.1) inset;
+            text-shadow: 0 -1px 0 rgba(110,100,107, 0.7); /*rgba(0,50,50,.6);*/
+            border-radius: 10px;
+        }
+                                                                                   /* Style of NOT selected acordion bar */
+        label { 
+            font-family: helvetica;
+            cursor: pointer; 
+            display: block; 
+            border: solid 1px transparent;
+            text-align: left; /*center; */
+            line-height: 40px; 
+            border-radius: 3px; 
+            float: left;
+            width: 40px; /*40px;*/                                                              /* Size */
+            height: 500px; /*550px; /*200px;*/
+            line-height: 500px; /*550px; /*200px;*/                                                      /* Size as viewn from text */
+        }
+        label:last-child { margin-right: 0; }
+                                                                                   /* (continued) Style of NOT selected acordion bar */
+        label {     
+            background: #a1c4fd; /*#FEE7F0; /*rgba(77, 144, 254, .5); */
+            background: -webkit-linear-gradient(top, #c2e9fb 0%, #a1c4fd 100%); /*#5A5E6B, #AAAEBB);*/
+            border: solid 1px rgba(0,0,0,.15); 
+            border-radius: 10px;
+            box-shadow: 0 1px 1px rgba(0,0,0,.65), 0 1px 0 rgba(255,255,255,.1) inset;
+            white-space: nowrap;
+        }
+                                                                                   /* Rotation of accordion labels */
+        .rotate {
+          position: relative;                                                      /* position, top and line-height tags*/
+          top: 410px; /*450px;                                                              /* necessary, otherwise element has */
+          line-height: 40px;                                                       /* a width of 550px -> click ambiguous*/
+          -webkit-transform: rotate(-90deg); /* Safari */
+          -moz-transform: rotate(-90deg); /* Firefox */
+          -ms-transform: rotate(-90deg); /* IE */
+          -o-transform: rotate(-90deg); /* Opera */
+          filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3); /* Internet Explorer */
+         }
+        
+                                                                                   /* Style of article INSIDE accordion */
+        article { 
+            width: 0;
+            height: 500px; /*440px;  */
+            overflow: hidden; 
+            -webkit-transition: width .25s linear, opacity .2s linear; 
+            transition: width .25s linear, opacity .3s linear; 
+            position: relative; 
+            top: 5px;
+            margin-bottom: 0;
+            padding: 0;
+            margin-right: 10px;
+            opacity: 0;
+            float: left;
+        }
+        div:last-child article { margin-right: 0; }
+        article p {                                                                /* Latent size or article - deployed size : see input:checked */
+            color: #333;
+            font-family: helvetica;
+            font-size: 12px;
+            line-height: 18px;
+            width: 800px; /*570px;*/                                               /* max = article-checked width - 2*padding, here 590px-2*10px */
+            padding: 5px 10px;
+        }
+        div > input:checked ~ article { width: 820px; opacity: 1; }             /* Width between accordion bars when selected; prev: 255px; opacity: 1; } */ 
+                                          /* 570px */                           /*    maxi = outer.width - padding, here 600px-10px */ 
+                                                                                /* Image style INSIDE accordion*/
+        .floatC { 
+          height: 350px; /*400px;*/
+          /*width: 800px; /*width: 300px;*/
+          /*float:center; */
+          margin:10px 10px 0 0;
+          text-align: center 
+          } 
+   
+</style>
+

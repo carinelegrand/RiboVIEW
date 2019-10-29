@@ -1,0 +1,127 @@
+#!/bin/bash
+
+path=/home/user/Riboview/data/GSExxxxx/SRA
+cd $path
+
+# Check consistency of SRA files
+for sample in SRR1 \
+              SRR2 \
+              SRR3 \
+              SRR4
+do
+  vdb-validate $sample'.sra'
+done &> screenoutput_sra-validate-stats.log
+
+
+#### SRA to FASTQ.gz and FASTQC1
+mkdir Fastqc1_Downloaded
+for sample in SRR1 \
+              SRR2 \
+              SRR3 \
+              SRR4
+do 
+  echo $sample
+  # sra to fastq.gz
+  fastq-dump -Z --gzip $sample.sra > $sample.fastq.gz
+  # fastqc
+  fastqc $sample.fastq.gz -o Fastqc1_Downloaded
+  echo
+done &> screenoutput_Fastqc1.log &
+
+
+#### Remove adapters
+mkdir Fastqc2_Cutadapt
+for sample in `ls SRR[1234].fastq.gz | sed 's/.fastq.gz//g'`
+do
+  echo $sample
+  # cutadapt v1.8.1
+  cutadapt  --format=fastq             \
+            -a CTGTAGGCACCATCAAT       \
+            --error-rate=0.1           \
+            --times=2                  \
+            --overlap=1                \
+            --output=$sample.cutadapt.gz \
+            $sample.fastq.gz
+  # fastqc
+  fastqc $sample.cutadapt.gz -o Fastqc2_Cutadapt
+done  &> screenoutput_cutadaptNfastqc2.log &
+
+
+## Quality-trim both ends and inside (sliding window), size-select, and (optionally, not done here) remove adapter
+mkdir Fastqc3_QCed
+for sample in SRR1 \
+              SRR2 \
+              SRR3 \
+              SRR4
+do
+  echo $sample
+  # Quality trimming using Trimmomatic
+  java -jar /home/user/prog/Trimmomatic-0.38/trimmomatic-0.38.jar \
+           SE \
+           -phred33 \
+           $sample.fastq.gz  \
+           $sample.QCed.fq.gz   \
+           LEADING:30           \
+           TRAILING:30          \
+           MINLEN:25            \
+           CROP:36
+  # fastqc
+  fastqc $sample.QCed.fq.gz -o Fastqc3_QCed              
+done  &> screenoutput_QCedNfastqc3.log &
+
+
+### Depletion of rRNA, tRNA, MT-trmRNAetc
+# Build reference
+bowtie-build \
+  /home/user/Ref/organism_trRNA_MT-trmRNA_v1.fasta \
+                      organism_trRNA_MT-trmRNA_v1
+# Align with Bowtie 
+for sample in `ls SRR[1234].QCed.fq.gz | sed 's/.QCed.fq.gz//g'`
+do
+  echo $sample
+  gzip -dc $sample.QCed.fq.gz | bowtie \
+                                        --sam \
+                                        --seedmms 2 \
+                                        --seedlen 11 \
+                                        --seed 494123 \
+                                        --maqerr 70 \
+                                        --tryhard \
+                                        -k 1 \
+                                        --un $sample.deplof_trRNA_MTtrmRNA.fq \
+                                        --best \
+                                        --maxbts 800 \
+                                        organism_trRNA_MT-trmRNA_v1 \
+                                        - \
+                               | samtools view -hb - > $sample.trRNA_MTtrmRNA.bam
+done &> screenoutput_Align.depl.log &
+
+  
+### Align to mRNA
+# Build reference
+bowtie-build \
+    /home/user/Ref/organism_mRNA_v1.fasta \
+                      organism_mRNA_v1
+# Align, uniquely, with Bowtie    
+for sample in `ls SRR[1234].fastq.gz | sed 's/.fastq.gz//g'`
+do
+  echo $sample
+  bowtie \
+          --sam \
+          --seedmms 2 \
+          --seedlen 11 \
+          --seed 764351 \
+          --maqerr 70 \
+          -m 1 \
+          organism_mRNA_v1 \
+          $sample.deplof_trRNA_MTtrmRNA.fq \
+     | samtools view -hb - > $sample.mRNA.bam
+done &> Align.mRNA.screen &
+
+
+#### Checksums
+for fichier in *.mRNA.bam
+do
+  echo $fichier
+  md5sum $fichier > $fichier.md5sum
+done
+

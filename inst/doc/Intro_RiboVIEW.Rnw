@@ -1,0 +1,873 @@
+\documentclass[ a4paper ]{article}
+% \VignetteIndexEntry{RiboVIEW: Visualization, Quality Control and Statistical Analysis for Ribosome Profiling data}
+
+\usepackage{graphicx}
+\usepackage[svgnames]{xcolor} 
+% See also https://calque.pagesperso-orange.fr/latex/latexps.html,
+%          http://latexcolor.com/
+% and for symbols : 
+% https://www.commentcamarche.net/contents/620-latex-table-de-caracteres
+\usepackage[colorlinks=true,urlcolor=blue, linkcolor=DimGray]{hyperref}
+\usepackage{color}
+\usepackage{Sweave}
+\usepackage{hyperref}
+
+\newcommand{\strong}[1]{{\normalfont\fontseries{b}\selectfont #1}}
+\let\pkg=\strong
+\newcommand{\code}[1]{{\tt #1}}
+\newcommand{\term}[1]{{\tt #1}}
+\newcommand{\proglang}[1]{{\bf #1}}
+\newcommand{\Rcomment}[1]{{\normalfont\fontseries{b}\selectfont #1\definecolor{darkslateblue}{rgb}{0.28, 0.24, 0.55}}}
+
+% Commands for inclusion of Python and Bash code in appendix :
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{8} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{8}  % for normal
+% Custom colors
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+% Show code with highlighted syntax
+\usepackage{listings}
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+language=Python,
+basicstyle=\ttm,
+otherkeywords={self},             % Add keywords here
+keywordstyle=\ttb\color{deepblue},
+emph={MyClass,__init__},          % Custom highlighting
+emphstyle=\ttb\color{deepred},    % Custom highlighting style
+stringstyle=\color{deepgreen},
+frame=tb,                         % Any extra options here
+showstringspaces=false,           % 
+breaklines=true,
+commentstyle=\small\color{gray}   % commentstyle=\itshape\color{gray}
+}}
+% Python environment
+\lstnewenvironment{python}[1][]
+{
+\pythonstyle
+\lstset{#1}
+}
+{}
+% Python for external files
+\newcommand\pythonexternal[2][]{{
+\pythonstyle
+\lstinputlisting[#1]{#2}}}
+% Bash style for highlighting
+\newcommand\bashstyle{\lstset{
+language=Bash,
+basicstyle=\ttm,
+otherkeywords={self},             % Add keywords here
+keywordstyle=\ttb\color{deepblue},
+emph={MyClass,__init__},          % Custom highlighting
+emphstyle=\ttb\color{deepred},    % Custom highlighting style
+stringstyle=\color{deepgreen},
+frame=tb,                         % Any extra options here
+showstringspaces=false,           % 
+breaklines=true,
+commentstyle=\small\color{gray}   % commentstyle=\itshape\color{gray}
+}}
+% Bash environment
+\lstnewenvironment{bash}[1][]
+{
+\bashstyle
+\lstset{#1}
+}
+{}
+% Bash for external files
+\newcommand\bashexternal[2][]{{
+\bashstyle
+\lstinputlisting[#1]{#2}}}
+
+
+
+\title{ Visualization, Quality Control and Statistical Analysis for Ribosome Profiling data~: \\
+the \pkg{RiboVIEW} Package }
+
+\author{Carine Legrand\footnote{Division of Epigenetics, DKFZ-ZMBH Alliance, %
+German Cancer Research Center, Im Neuenheimer Feld 580, 69120 Heidelberg, Germany. %
+\code{c.legrand@dkfz.de}}
+$^,$\footnote{Independent researcher, Kreuzstr. 5, 68259 Mannheim. %
+\code{carine.legrand1@gmail.com}}
+\and 
+Francesca Tuorto\footnote{Division of Epigenetics, DKFZ-ZMBH Alliance, 
+German Cancer Research Center, Im Neuenheimer Feld 580, 69120 Heidelberg, Germany.}}
+%Francesca Tuorto$^*$} %"cheating" to first footnote since it is always an asterix
+
+
+\date{September 2019}
+
+\begin{document}
+
+\maketitle
+
+\newpage
+
+\textcolor{DimGray}{\tableofcontents}
+
+\newpage
+
+\textcolor{DimGray}{\section{Introduction}}
+
+The \pkg{RiboVIEW} package provides quality control, an unbiased estimate of 
+enrichment and visualization tools for ribosome profiling data. This vignette 
+describes the workflow from alignment files (BAM format) to \pkg{RiboVIEW} output 
+files, including RiboQC and RiboMINE html files. This is done on the base of 
+synthetic BAM files, which are small enough to be included in a software package, 
+and which are fully defined~:
+
+\begin{itemize}
+\item 2 conditions, 3 replicates per condition,
+\item 20000 reads, 100 mRNA
+\item A site mostly in-frame in simulated footprints (odds 50:11:1 in 
+0/+1/+2 reading frame)
+\item Codon Proline-CCC is paused in condition 2 as compared to condition 1.
+\end{itemize}
+
+
+Additionally, the following information is appended~:
+\begin{itemize}
+\item Example Workflow from SRA to BAM files,
+\item File used to generate synthetic BAM files used in this vignette (in Python),
+\item Troubleshooting.
+\end{itemize}
+
+
+\textcolor{DimGray}{\section{Installing \pkg{RiboVIEW}}}
+
+\textcolor{DimGray}{\subsection{Installing R package \pkg{RiboVIEW}}}
+
+\pkg{RiboVIEW} can be installed in R ($\ge$ 3.4.4) using 
+
+<<eval=FALSE>>= 
+install.packages("RiboVIEW")
+@
+
+which will fetch the package directly from CRAN repository. After successful
+ installation, package \pkg{RiboVIEW} is loaded by 
+<<eval=TRUE>>= 
+library(RiboVIEW)
+@
+
+
+Alternatively, it's 
+possible to download the source package RiboVIEW\_1.0.tar.gz from CRAN and install it using~:
+
+<<eval=FALSE>>= 
+install.packages("PATH/TO/FILE", repos = NULL, type="source")
+@
+
+Yet further alternatives exist, please consult CRAN help pages for details ~: 
+\url{https://cran.r-project.org/manuals.html}.
+
+
+If installing from source, the user should also make sure that the following R packages 
+dependencies are present~:
+
+\begin{itemize}
+\item dendextend ($\ge$ 1.8.0)
+\item ggplot2 ($\ge$ 3.0.0)
+\item gplots ($\ge$ 3.0.1)
+\item gridExtra ($\ge$ 2.3)
+\item latex2exp ($\ge$ 0.4.0)
+\item MASS ($\ge$ 7.3-50)
+\item png ($\ge$ 0.1-7)
+\item RColorBrewer ($\ge$ 1.1-2)
+\item PythonInR ($\ge$ 0.1-7)
+\item R.devices ($\ge$ 2.16.1)
+\item tseriesChaos ($\ge$ 0.1-13)
+\item tsne ($\ge$ 0.1-3)
+\item VennDiagram  ($\ge$ 1.6.20)
+\end{itemize}
+
+\textcolor{DimGray}{\subsection{Python dependencies}}
+
+\pkg{RiboVIEW} package relies on Python for calculation of all base 
+metrics, including enrichment (version 2.7.6 or superior, up to 2.7.9). 
+This package was developed and tested in Python 2, though large parts of the 
+code would probably also work well in Python 3.
+
+Further, some Python modules are necessary as well. Some should already be 
+present in the core Python distribution, others should be installed, for example 
+using \code{pip} (see \url{https://pip.pypa.io/en/stable/installing/} for pip 
+installation and instructions). 
+
+The list of these dependencies is~:
+
+
+
+\begin{itemize}
+\item Biopython ($\ge$ 1.72, available from \url{https://biopython.org/wiki/Download})
+\item numpy ($\ge$ 1.8.2, available from \url{https://www.numpy.org}, see detailed installation 
+        instructions at \url{https://www.scipy.org/install.html})
+\item pysam ($\ge$ 0.15.0, available from \url{https://pypi.org/project/pysam/})
+\end{itemize}
+
+
+
+
+Now that everything is installed, it is possible to start using \pkg{RiboVIEW}. 
+The next section describe how to setup \pkg{RiboVIEW} for a set of aligned reads (BAM files), 
+and the corresponding experiment.
+
+\textcolor{DimGray}{\section{Setting up \pkg{RiboVIEW}}}
+
+\textcolor{DimGray}{\subsection{Input and output directory}}
+
+Setup starts with defining the folder where input BAM files are located. These 
+synthetic BAM files are provided with \pkg{RiboVIEW} package, they are located in 
+the package subfolder \code{inst/extdata/}. The following command~:
+
+<<eval=FALSE>>= 
+idir <- paste(system.file(package="RiboVIEW"), "/extdata/",sep="")
+idir
+@
+
+will locate this folder on the user's computer. Second, the address of the output directory, 
+which is where all plots, tables and RData files will be placed, should 
+be specified, using for example~:
+
+<<eval=FALSE>>= 
+pathout <- paste(tempdir(),"/output-files-vignette-RiboVIEW/",sep="")
+@
+
+This command defines an address in a temporary directory, using 
+command tempdir(). It is advised to define one's own address for the 
+output folder~:
+
+<<eval=FALSE>>= 
+pathout <- "/Path/to/my/RiboVIEW/output/directory/"
+@
+
+When doing this, make sure to include a final slash "/" character. Run the following commands 
+to create the output folder, and to navigate to it~:
+
+<<eval=FALSE>>= 
+system(paste("mkdir -p ",pathout,sep=""))
+setwd(pathout)
+@
+
+\textcolor{DimGray}{\subsection{Reading BAM, FASTA and CDS annotation files}}
+
+The addresses of synthetic BAMs provided in \pkg{RiboVIEW} package are provided 
+by the following commands. These addresses are gathered in \code{list.bam}.
+\newline
+<<eval=FALSE>>= 
+readsBAM.1.1  <- paste(idir,"Cond1-Rep1.bam",sep="")
+readsBAM.1.2  <- paste(idir,"Cond1-Rep2.bam",sep="")
+readsBAM.1.3  <- paste(idir,"Cond1-Rep3.bam",sep="")
+readsBAM.2.1  <- paste(idir,"Cond2-Rep1.bam",sep="")
+readsBAM.2.2  <- paste(idir,"Cond2-Rep2.bam",sep="")
+readsBAM.2.3  <- paste(idir,"Cond2-Rep3.bam",sep="")
+
+list.bam <- list(readsBAM.1.1, readsBAM.1.2, readsBAM.1.3, 
+                 readsBAM.2.1, readsBAM.2.2, readsBAM.2.3)
+@
+
+Similarly, addresses for reference sequences file (FASTA format), and CDS 
+(CoDing Sequence) annotation file (tab-separated format), are read as 
+follows~: 
+
+<<eval=FALSE>>= 
+# Reference sequences for mRNAs
+refFASTA=paste(idir,"synth.fasta",sep="")
+
+# Reference annotation for mRNAs' CDS
+refCDS=paste(idir,"synth.tsv",sep="")
+@
+
+It's the responsibility of the user to generate CDS annotation in this tabular 
+format. We provide the utility \code{gtf2table.py} as a help to generate this 
+annotation from a GTF (General Transfer Format) file, as provided for example 
+from Ensembl page "Downloads" / "Download data by FTP"~: 
+\url{https://www.ensembl.org/info/data/ftp/}. The tabular annotation should 
+look like the following~:
+
+\begin{footnotesize} %small, footnotesize, scriptsize
+\begin{center}
+\begin{tabular}{p{1,3cm}p{1,3cm}p{1,3cm}p{1,3cm}p{1,3cm}}
+ID                &  localStart & localEnd & strandDir & exonLength \\ \hline
+mRNA0 &  78 &  486 & + &  545  \\
+mRNA1 & 131 &  455 & + &  491  \\
+mRNA2 &  64 & 1384 & + & 1408  \\
+mRNA3 & 146 &  761 & + &  836  \\
+(etc.) & & & & \\
+\end{tabular}
+\end{center}
+\end{footnotesize}
+
+
+\textcolor{DimGray}{\subsection{Describing the experiment}}
+
+Typically, an experiment will have a \term{Control} (or \term{Wild-type}) 
+condition and at least one \term{Intervention} (or \term{GeneKO}, etc.) 
+condition. Here, since data is simulated, conditions are 
+neutrally named \term{Condition1} and \term{Condition2}, 
+and sample names are \term{C1.R1} for condition 1, replicate 1, 
+\term{C1.R2} for condition 1, replicate 2, 
+etc. Further, a numeric version of conditions 1 and 2 is coded by 
+integers 1 and 2.
+
+Condition names, condition numerals and sample names are passed on to 
+\pkg{RiboVIEW} using following lines~:
+
+<<eval=FALSE>>= 
+XP.conditions   <- c("cond1","cond1","cond1","cond2", "cond2","cond2")
+XP.conditions.i <- c( 1,1,1,2,2,2)
+XP.names        <- c("C1.R1", "C1.R2", "C1.R3", 
+                     "C2.R1", "C2.R2", "C2.R3")
+@
+
+The variable \term{XP.conditions.i} corresponds to \term{XP.conditions},
+ where condition 1 is coded "1" and condition 2 is coded "2".
+
+
+
+\textcolor{DimGray}{\section{Periodicity check and creation of enrichment files}}
+
+Function "periodicity" creates a table of coverage in -20nt to +20nt (nt~: 
+nucleotide) around the A-site, for footprint lengths in [25;32]nt, using
+the following command line~:
+<<eval=FALSE>>= 
+periodicity(list.bam, refCDS, refFASTA, pathout, XP.names, 
+  versionStrip = FALSE)
+@
+This function prints the number of transcripts 
+found in FASTA file, and how many of them have a correct annotation. It also 
+gives the address of the output file. For example, for condition 1, replicate 1,
+the address will be <pathout>/Sample-C1.R1\_OL.txt.
+This file looks like~:
+
+\begin{footnotesize} %small, footnotesize, scriptsize
+\begin{center}
+\begin{tabular}{p{0,9cm}p{0,2cm}p{0,2cm}p{0,2cm}p{0,2cm}p{0,2cm}p{0,2cm}p{0,2cm}p{0,2cm}}
+position & 25 & 26 & 27 & 28 & 29 & 30 & 31 & 32 \\ \hline
+-20 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 \\
+-19 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 \\
+-18 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 \\
+-17 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 \\
+-16 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 \\
+-15 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 \\
+-14 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 \\
+-13 &  0 &  0 &  0 &  0 &  0 &  0 &  0 &  0 \\
+-12 & 25 & 24 & 25 & 17 & 28 & 20 & 15 & 18 \\
+-11 &  4 &  2 &  6 &  7 &  2 &  6 &  4 &  4 \\
+-10 &  1 &  0 &  1 &  1 &  0 &  1 &  0 &  0 \\
+(etc.) & & & & \\
+\end{tabular}
+\end{center}
+\end{footnotesize}
+
+
+It is now possible to select which footprint lengths are appropriate for further 
+analysis, by using function \code{select.FPlen} and following instructions~:
+
+<<eval=FALSE>>= 
+attach(listminmax <- select.FPlen(list.bam, pathout, XP.names))
+@
+
+\begin{Schunk}
+\begin{Soutput}
+ Please select footprint lengths with - sufficient data, 
+                                      - sufficient periodicity, and
+                                      - peak at -12 nt. 
+ (Expected peak at -12 not -15 since transition A-P at initiation
+is almost immediate.)
+Note acceptable footprint lengths, then press [enter] to continue.
+\end{Soutput}
+\end{Schunk}
+
+
+
+The recurrence plots for all footprint lengths in one sample appear~:
+
+\begin{center}
+\includegraphics[width=12cm,height=12cm,keepaspectratio]{img/OL-1-1_small}
+\end{center}
+
+and the user is asked to pick appropriate footprint lengths for this sample. 
+
+There should be a peak at initiation of ribosome, in P-site,  at -12nt and 
+not before (black bar designated by an orange arrow in 
+the figure below), and there should be periodic coverage every 3nt from -12nt
+to +18nt (blue arrows).
+
+\begin{center}
+\includegraphics[width=6cm,height=6cm,keepaspectratio]{img/Periodicity_cond1-rep1_annot}
+\end{center}
+
+Here, footprint length of 25nt is appropriate. Looking successively at 
+other footprint lengths, it appears that footprint lengths of 26nt, 27nt, 
+..., 32nt are also appropriate, in condition 1 and replicate 1.
+
+
+This is repeated 
+for replicates 2 and 3 of condition 1, and for all 3 replicates of condition 2. 
+As a result, lengths 25nt to 32nt are suitable in all samples.
+
+After that, function \code{selecFPlen} prompts 
+for the minimum acceptable value~:
+
+\begin{Schunk}
+\begin{Soutput}
+Enter minimum acceptable footprint length
+ (this will be applied for all samples),
+ then press [enter] to continue :
+\end{Soutput}
+\end{Schunk}
+
+%\begin{center}
+%\includegraphics[width=10cm,height=10cm,keepaspectratio]{img/SelectMin_small}
+%\end{center}
+
+Type 25 as the minimum and press enter. Now, one should see the following~:
+
+\begin{Schunk}
+\begin{Soutput}
+Similarly, enter MAXimum acceptable footprint length
+ then press [enter] to continue :
+\end{Soutput}
+\end{Schunk}
+
+%\begin{center}
+%\includegraphics[width=10cm,height=10cm,keepaspectratio]{img/SelectMAX}
+%\end{center}
+
+Type 32 as the maximum and press enter.
+
+As this first basic quality control is done, it is now possible to 
+calculate codon enrichment, occupancy, etc. for each sample, by running the 
+following command line :
+
+enrichmentNoccupancy(list.bam, refCDS, refFASTA, mini, maxi,   
+  XP.names,pathout, versionStrip = FALSE)
+@
+
+\begin{Schunk}
+\begin{Soutput}
+Please enter the number of cores you would like to use for parallel 
+computations :
+ (recommended value for your computer : 7),
+ then press [enter] to continue.
+\end{Soutput}
+\end{Schunk}
+
+
+The function \code{enrichmentNoccupancy} is tuned to parallelize calculations 
+for faster generation of results. By default, it will take the suggested value 
+(all cores minus 1, so that the user's computer stays available for other tasks). 
+Nevertheless, the user can pick another value if relevant. Here 
+we select 6, since there are only as many samples, and we type enter. 
+
+Calculations start, and an evaluation of duration is shown, as 
+well as a list of outputs generated. These outputs are~:
+
+\begin{small} %small, footnotesize, scriptsize
+\begin{center}
+\begin{tabular}{p{5cm}p{6,5cm}}
+File name "Sample-C1.R1\_..."                &  Description \\ \hline
+BCO    &  Codon occupancy for A-site, P-site, 
+                               E-site and 3 codons upstream and downstream \\
+Codon-enrichment-unbiased\_mean  &  
+                             Unbiased codon enrichment for A-site,
+                               P-site, E-site and 90 codons upstream 
+                               and downstream, average over mRNAs   \\
+Codon-enrichment-unbiased\_sd &    
+                             Unbiased codon enrichment for A-site,
+                               P-site, E-site and 90 codons upstream 
+                               and downstream, standard deviation over mRNAs   \\
+Hussmann\_mean &
+                             Codon enrichment following Hussmann
+                               et al. 2015 (doi~: 10.1371/journal.pgen.1005732), average \\
+Hussmann\_sd &  Codon enrichment following Hussmann
+                               et al. 2015 (doi~: 10.1371/journal.pgen.1005732), standard deviation \\
+Sample-C1.R1.limCod  & Codon count at footprint start and footprint end \\
+Sample-C1.R1.limNt   & Nucleotide count at footprint start and footprint end \\
+Sample-C1.R1.metagene & Coverage of codons in A-site at standardized positions along CDS, to construct metagene plot  \\
+Sample-C1.R1.nbreads & Count of footprints per mRNA \\
+Sample-C1.R1.paused  & Repertoire of paused sites (in A site, codons 3 times more paused than codons in the vicinity) \\ 
+Sample-C1.R1.RPKM    & Count of reads per kilobase exon per million mapped \\
+Sample-C1.R1.SCO     & Single-Codon Occupancy = single-codon coverage in A-site / average coverage in an mRNA \\
+\end{tabular}
+\end{center}
+\end{small}
+
+These files constitute the basis for most quality controls and visualization plots and metrics.
+ When calculations stop and a new prompt appears, all these files will have been 
+created in the output folder defined earlier (paragraph 3.1). Now, everything is ready for creating visualization and 
+quality control values and plots.
+
+\textcolor{DimGray}{\section{Visualization}}
+
+Visualization relies on mean, standard deviation and standard error by 
+condition, as well as ratios between conditions. This is calculated by function 
+\code{generate.m.s}~:
+
+<<eval=FALSE>>= 
+generate.m.s(XP.conditions, XP.names, pathout, B=1000)
+@
+
+Next, enrichment plots, tracks and Venn diagrams are created by the following~:
+
+<<eval=FALSE>>= 
+visu.m.s.enrichmnt.res <- visu.m.s.enrichmnt(XP.conditions, 
+  XP.names, pathout)
+visu.m.s.enrichmnt.res
+
+visu.tracks.res <- visu.tracks(XP.conditions, XP.names, pathout,
+  refCDS, mRNA="random", codon.labels=FALSE,
+  codon.col="darkslateblue")
+visu.tracks.res
+
+Venn.all.res <- Venn.all(XP.names, pathout)
+Venn.all.res
+
+enricht.aroundA.res <- enricht.aroundA(XP.conditions, 
+  XP.names, pathout)
+enricht.aroundA.res
+@
+
+These functions do not return plots directly, instead they store them in the output
+folder, and register their addresses in variables ${visu.m.s.enrichmnt.res}$, 
+${visu.tracks.res}$, ${Venn.all.res}$ and ${enricht.aroundA.res}$. 
+These addresses are later used in 
+HTML reports. For example, enrichment for 2 comparisons, stored 
+as ${visu.m.s.enrichmnt.res\$plot.enrich}$, is given in the next figure~:
+
+\begin{center}
+\includegraphics[width=10cm,height=10cm,keepaspectratio]{img/Visu-enrichmnt_compare-condition_cond1_relative-to_cond2.png}
+\end{center}
+
+In agreement with simulated conditions, Proline-CCC codon is less enriched in
+condition 1 as compared to condition2, as is visible on this figure.
+
+Furthermore, enrichment of each codon in and around the A-site is displayed as 
+follows (truncated view)~: 
+
+\begin{center}
+\includegraphics[width=10cm,height=10cm,keepaspectratio]{img/Enricht-all-zoom.png}
+\end{center}
+
+This corresponds to files \code{enrichment-all\_C1.R1} and 
+\code{enrichment-all\_C2.R1} (.png or .eps depending on the format of these plots), 
+stored in the output folder which was defined previously. Again, Proline-CCC 
+enrichment is clearly visible in condition 2 as compared to condition 1. Some profiles display noise or seeming 
+trends, for instance codon GUC, however this corresponds to randomness only. Both noise 
+and perceived patterns smooth out when generating more reads, for instance 100000 
+instead of 20000 in the present case (this can be done with the Python script provided in
+appendix B, using NbReads=100000).
+
+Visualization graphics are integrated later on in the "RiboMINE" html report.
+
+\textcolor{DimGray}{\section{Quality controls}}
+
+\textcolor{DimGray}{\subsection{Replicates}}
+
+Replicates consistency is examined using the intersection of translated mRNAs 
+in several replicates (Venn diagram per condition), footprint count correlation at gene level 
+(permissive, since 0.90 is easily attained, even in relatively poor datasets), 
+and at codon level (more stringent, only high coverage datasets can reach high 
+correlation levels). Finally, a heatmap with hierarchical clustering reveals if 
+replicates do effectively cluster more closely together than if they were chosen at random.
+
+These quality controls are created using following commands~:
+
+<<eval=FALSE>>= 
+repl.correl.counts.Venn.res <- repl.correl.counts.Venn(XP.conditions, 
+  XP.names, pathout)
+repl.correl.counts.Venn.res
+
+repl.correl.gene.res <- repl.correl.gene(XP.conditions, XP.names, 
+  pathout)
+repl.correl.gene.res
+
+repl.correl.codon.res <- repl.correl.codon(list.bam, refCDS, 
+  refFASTA, mini, maxi, XP.names, XP.conditions, pathout)
+repl.correl.codon.res
+
+repl.correl.heatmap.res <- repl.correl.heatmap(XP.conditions.i, 
+  XP.names, pathout)
+repl.correl.heatmap.res
+@
+
+Again, these functions do not return plots directly, but store them in the output
+folder. Addresses of plots, and metrics for each quality control are stored 
+in variables ${repl.correl.counts.Venn.res}$, ${repl.correl.gene.res}$, 
+${repl.correl.codon.res}$ and ${repl.correl.heatmap.e.res}$. A brief text
+interpreting the quality value is also given.
+These addresses, values and text are later used in HTML reports. 
+
+Below is for example the heatmap plot~: 
+\begin{center}
+\includegraphics[width=9cm,height=9cm,keepaspectratio]{img/Replicates-heatmap.png}
+\end{center}
+
+The dendrogram clearly indicates separation between condition 1 and condition 2. 
+Furthermore, Spearman correlation coefficient between conditions and actual 
+clustering is 1.0, unsurprisingly. This correlation coefficient is given by 
+variable ${repl.correl.heatmap.e.res\$value}$.
+
+
+\textcolor{DimGray}{\subsection{Drug artifacts}}
+
+Presence or not of drug artifacts is examined using Arginine codons enrichment in a window of 
++/- 90nt around A-site, and using logo plots of nucleotides and codons at 
+footprint boundaries. 
+
+Quality controls for drugs artifacts are run as follows~:
+
+<<eval=FALSE>>= 
+chx.artefacts.res <- chx.artefacts(XP.conditions, XP.names, 
+  pathout)
+chx.artefacts.res
+
+ntcodon.freq.nt.res <- ntcodon.freq.nt(XP.conditions, XP.names, 
+  pathout)
+ntcodon.freq.nt.res
+
+ntcodon.freq.cod.res <- ntcodon.freq.cod(XP.conditions, 
+  XP.names, pathout)
+ntcodon.freq.cod.res
+@
+
+The graphic corresponding to Arginine codons enrichment is as follows~:
+ 
+\begin{center}
+\includegraphics[width=9cm,height=9cm,keepaspectratio]{img/chx-artefacts-Arg.png}
+\end{center}
+
+Notably, enrichment for all codons is given in the HTML report \code{Results-Mine.html},
+since functional differences might also appear on some other codons.
+
+
+\textcolor{DimGray}{\subsection{Batch effects}}
+
+Complementing replicates lookup, unsupervised search of batch effects is performed. 
+
+
+
+<<eval=FALSE>>= 
+batch.effects.lm.e.res <- batch.effects.lm.e(XP.conditions, XP.names, pathout)
+batch.effects.lm.e.res
+
+batch.effects.pca.res <- batch.effects.pca(XP.conditions, XP.names, pathout)
+batch.effects.pca.res
+@
+
+Potential batch effects on nucleotides are given below:
+ 
+\begin{center}
+\includegraphics[width=10cm,height=10cm,keepaspectratio]{img/Batch-effects-lm-e.png}
+\end{center}
+
+This plot displays the coefficient of a linear fit of codon enrichment 
+relative to \code{a}, \code{c}, \code{g} or \code{u}-content in codons, for each replicate. If we denote 
+${k}$ the coefficient, or slope, of the linear fit of condition 1, 
+replicate 1 enrichment on \code{c}-content, then any additional \code{c} in codons 
+is associated with a ${k}$*1 increase (or decrease in case ${k}$ is negative) 
+mean enrichment of these codons. Clearly, coefficients are very small in regard 
+with the range of values [-1 ; 1]. This y-axis range can be larger if necessary, 
+but it cannot be smaller, with the purpose of avoiding any over-interpretion of a slope
+which is tiny enough to be irrelevant, which is the case here.
+
+Nevertheless, there could be a relevantly high coefficient, with error bars 
+giving an indication if the coefficient could be significantly different from 0. More 
+precisely, ${p}$-values are given in ${batch.effects.lm.res\$recommendation.mat}$,
+as well as linear fit coefficients and associated standard errors. These 
+values for replicate 1 in condition 1 are reproduced here~:
+
+<<eval=FALSE>>= 
+library(gridExtra)
+grid.table(round(batch.effects.lm.res$recommendation.mat, 4)[,1:3])  
+@
+
+\begin{center}
+\includegraphics[width=4cm,height=4cm,keepaspectratio]{img/Batch-effects_lm-mat_C1R1.png}
+\end{center}
+
+The lowest $p$-value after correction for multiple testing is given in 
+${batch.effects.lm.res\$value}$, as follows~:
+
+<<eval=FALSE>>= 
+batch.effects.lm.res$value
+@
+
+\begin{Schunk}
+\begin{Soutput}
+[1] 0.01329084
+\end{Soutput}
+\end{Schunk}
+
+This adjusted ${p}$-value corresponds to the fit on \code{u}-content in condition 1, 
+replicate 1 (raw ${p}$-value = 0.0022). It is lower than the cutoff 0.05 and therefore significant, however, 
+as highlighted above, the corresponding coefficient is too small to be relevant 
+(this coefficient is 0.0272 per additional \code{u}). This likely corresponds to a false positive, 
+since the false positive rate, using 0.05 as a cutoff, is 5\% of the 16 computed $p$-values, 
+that is to say about 1 false positive ${p}$-value in this set of values.
+
+
+\textcolor{DimGray}{\subsection{Metagene}}
+
+Further, plotting footprint density along a normalized transcript (metagene) 
+allows to visualize if monosome selection was adequate, if there were inflation of reads 
+just after AUG (ribosome leakage in case of incomplete initiation inhibition), or if there was leakage (readthrough) at one of the STOP codons. 
+
+These quality controls are generated using~:
+
+<<eval=FALSE>>= 
+metagene.res <- metagene.all(XP.conditions, XP.names, pathout) 
+
+metagene.monosome.res <- metagene.res[[1]]
+metagene.monosome.res
+
+metagene.inflation.res <- metagene.res[[2]]
+metagene.inflation.res
+
+metagene.leakage.res <- metagene.res[[3]]
+metagene.leakage.res
+@
+
+For instance, leakage at AUG or STOP codon would be apparent on the plot below~:
+ 
+\begin{center}
+\includegraphics[width=10cm,height=10cm,keepaspectratio]{img/Metagene-leakage.png}
+\end{center}
+
+In this ideal case, in accordance with simulation setting, there is no leakage.  
+This is further described by the associated ${value}$ variable in 
+${metagene.leakage.res}$~:
+
+<<eval=FALSE>>= 
+metagene.leakage.res$value
+@
+
+\begin{Schunk}
+\begin{Soutput}
+$start
+$start$p
+[1] 1
+
+
+$stop
+$stop$median
+[1] 0
+
+$stop$sd
+[1] 0
+\end{Soutput}
+\end{Schunk}
+
+
+
+\textcolor{DimGray}{\section{HTML outputs}}
+
+\textcolor{DimGray}{\subsection{Quality control}}
+
+HTML report for quality control is generated using the following command~:
+
+<<eval=FALSE>>= 
+outputQc(pathout, XP.conditions)    
+@
+
+This creates the file \code{Results-Qc.html}. Opened with an internet 
+browser (the page worked fine under Chrome, Safari, Firefox, Brave and IE), the report 
+looks like the following~:
+
+\begin{center}
+\includegraphics[width=12cm,height=10cm,keepaspectratio]{img/RiboQC-replicates-correl-genes.png}
+\end{center}
+
+This instance of the report corresponds to category \code{Replicates}, 
+tab \code{Correlation between genes}. The user can then navigate by selecting one
+of the four categories \code{Periodicity}, \code{Replicates}, \code{Footprints} and \code{Drugs},
+ and by clicking the desired tab inside of each category.
+
+\textcolor{DimGray}{\subsection{Visualization}}
+
+HTML report for visualization is generated using the following command~:
+
+<<eval=FALSE>>= 
+outputMine(pathout, XP.conditions)  
+@
+
+This creates the file \code{Results-Mine.html}. Similarly, the report opened in 
+an internet browser looks as follows~:
+
+\begin{center}
+\includegraphics[width=12cm,height=10cm,keepaspectratio]{img/RiboMine_tracks.png}
+\end{center}
+
+This instance of the report corresponds to category \code{Within conditions}, 
+tab \code{Tracks}. Again, the user can navigate by selecting one of the 
+categories \code{Within conditions}, \code{Between conditions} and 
+\code{Codon enrichment} and clicking the tab of interest.
+
+
+\appendix
+
+\newpage
+\section{Example workflow from SRA to BAM files}
+
+This workflow is adapted to a situation where SRA files have been downloaded 
+from Gene Expression Omnibus (GEO) database (\url{https://www.ncbi.nlm.nih.gov/geo}).
+Files from GEO usually bear names like \code{SRR<some numbers>.sra}. This workflow
+ is accordingly tailored to such file names. The user is free to adapt this aspect. 
+ Furthermore, adapter trimming might need some modifications, depending on experimental 
+ and sequencing setting.
+\newline
+
+\bashexternal{appendix/workflow_SRA2BAM.bsh}
+
+\newpage
+\section{Python script for synthetic BAM files}
+
+This Python script generates synthetic mRNAs (\code{synth.fasta}),
+ their coding sequence annotation (\code{synthetic.tsv}), and simulates footprint reads from this 
+ pool of mRNAs for 2 conditions and 3 replicates per condition. Condition 1 is a control
+ condition, while condition 2 exhibits enriched Pro-CCC codon. This is simulated 
+ by a doubled probability of  sampling a footprint with A-site located at a 
+ Pro-CCC codon. This script requires SAMtools (\url{http://www.htslib.org}), as well as Python packages pysam 
+ and numpy to run properly.
+\newline
+
+\pythonexternal{appendix/synth-files_vignette.py}  %\lstinputlisting{synth-files_vignette.py}
+
+\newpage
+\section{Troubleshooting}
+
+\subsection{Output files are not located in the working directory.}
+
+When defining the working directory, the user should make sure to include a final "/". 
+<<eval=FALSE>>= 
+wdir <- "/Path/to/my/working/directory/"
+@
+
+\subsection{RiboVIEW cannot find a file.}
+
+Were all commands run, following the same order as in the template ? Some files 
+and plots produced at one step are indeed necessary for other commands later on, 
+so that it's preferable to run these commands in full 
+and in the recommended order.
+
+Or, possibly, was the output folder moved to another place ?
+Most commands rely on the output folder specified in variable $pathout$ and on 
+$XP.names$, $XP.names.i$ and $XP.conditions$. Make sure these didn't change inadvertently. 
+If one of these variables was changed on purpose, it's probably safest to make 
+a backup of the old output directory, and to run RiboVIEW freshly from start with 
+these newly defined variables.
+
+\subsection{R returns a warning like : "The following objects are masked from (...)"}
+
+This might happen when running "attach(listminmax <- select.FPlen(list.bam, pathout, XP.names))"
+twice. If the values in 'mini' and 'maxi' are the ones the user selected, it's 
+fine to ignore this message. Otherwise, it is safer to run this function in 2 
+steps :
+<<eval=FALSE>>= 
+listminmax <- select.FPlen(list.bam, pathout, XP.names)
+mini <- listminmax[[1]]
+maxi <- listminmax[[2]]
+@
+
+
+\end{document}
