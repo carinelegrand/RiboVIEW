@@ -17,7 +17,9 @@ Description: Ribosomes translate messenger RNAs (mRNAs) into proteins, and
   mining of causal or confounding factors. 
   Reference : Legrand, C. and Tuorto, F. (in press) RiboVIEW: a computational 
   framework for visualization, quality control and statistical analysis of 
-  ribosome profiling data. NAR. doi : 10.1093/nar/gkz1074
+  ribosome profiling data, Nucleic Acids Research, doi : 10.1093/nar/gkz1074.
+  (URL of advance article, online 28.11.2019 :
+  https://academic.oup.com/nar/advance-article/doi/10.1093/nar/gkz1074/5645003)
 Date: 2019-10-26
 Depends: R (>= 3.4.4)
 Imports: PythonInR, MASS, graphics, stats, utils, ggplot2, grid,
