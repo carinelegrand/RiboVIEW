@@ -1,9 +1,6 @@
-Package: RiboVIEW
-Title: Visualization, Quality and Statistics for Ribosome Profiling
-Version: 1.0
-Author: Carine Legrand <c.legrand@dkfz.de>
-Maintainer: Carine Legrand <c.legrand@dkfz.de>
-Description: Ribosomes translate messenger RNAs (mRNAs) into proteins, and 
+This is package RiboVIEW for Visualization, Quality and Statistics for Ribosome Profiling
+
+Purpose : Ribosomes translate messenger RNAs (mRNAs) into proteins, and 
   ribosome profiling technique allows to retrieve those mRNAs fragments which are 
   under active translation in a ribosome. These mRNA fragments are then generally
   sequenced and further analysed for codon enrichment, translation efficiency, etc.
@@ -20,15 +17,17 @@ Description: Ribosomes translate messenger RNAs (mRNAs) into proteins, and
   ribosome profiling data, Nucleic Acids Research, doi : 10.1093/nar/gkz1074.
   (URL of advance article, online 28.11.2019 :
   https://academic.oup.com/nar/advance-article/doi/10.1093/nar/gkz1074/5645003)
-Date: 2019-10-26
-Depends: R (>= 3.4.4)
-Imports: PythonInR, MASS, graphics, stats, utils, ggplot2, grid,
-        gridExtra, parallel, tseriesChaos, png, tsne, gplots,
-        dendextend, VennDiagram, RColorBrewer, grDevices, latex2exp,
-        R.devices
-License: GPL-3
-Encoding: UTF-8
-LazyData: true
-NeedsCompilation: no
-Packaged: 2019-10-28 19:49:54 UTC; clegrand
-URL: https://doi.org/10.1093/nar/gkz1074
+
+Installation : From R, install devtools package if you don't already have it installed :
+
+    install.packages("devtools")
+
+Then, import the just installed library :
+
+    library(devtools)
+    
+Finally, install RiboVIEW from its github repositery :
+
+    install_github("carinelegrand/RiboVIEW")
+
+
