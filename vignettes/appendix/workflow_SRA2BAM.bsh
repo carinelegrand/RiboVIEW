@@ -48,26 +48,23 @@ done  &> screenoutput_cutadaptNfastqc2.log &
 
 
 ## Quality-trim both ends and inside (sliding window), size-select, and (optionally, not done here) remove adapter
-mkdir Fastqc3_QCed
-for sample in SRR1 \
-              SRR2 \
-              SRR3 \
-              SRR4
+mkdir Fastqc3_Qted
+for sample in `ls SRR[1234].fastq.gz | sed 's/.fastq.gz//g'`
 do
   echo $sample
   # Quality trimming using Trimmomatic
   java -jar /home/user/prog/Trimmomatic-0.38/trimmomatic-0.38.jar \
            SE \
            -phred33 \
-           $sample.fastq.gz  \
-           $sample.QCed.fq.gz   \
+           $sample.cutadapt.gz  \
+           $sample.Qted.fq.gz   \
            LEADING:30           \
            TRAILING:30          \
            MINLEN:25            \
            CROP:36
   # fastqc
-  fastqc $sample.QCed.fq.gz -o Fastqc3_QCed              
-done  &> screenoutput_QCedNfastqc3.log &
+  fastqc $sample.Qted.fq.gz -o Fastqc3_Qted              
+done  &> screenoutput_QtedNfastqc3.log &
 
 
 ### Depletion of rRNA, tRNA, MT-trmRNAetc
