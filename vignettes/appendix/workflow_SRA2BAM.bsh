@@ -73,10 +73,10 @@ bowtie-build \
   /home/user/Ref/organism_trRNA_MT-trmRNA_v1.fasta \
                       organism_trRNA_MT-trmRNA_v1
 # Align with Bowtie 
-for sample in `ls SRR[1234].QCed.fq.gz | sed 's/.QCed.fq.gz//g'`
+for sample in `ls SRR[1234].Qted.fq.gz | sed 's/.Qted.fq.gz//g'`
 do
   echo $sample
-  gzip -dc $sample.QCed.fq.gz | bowtie \
+  gzip -dc $sample.Qted.fq.gz | bowtie \
                                         --sam \
                                         --seedmms 2 \
                                         --seedlen 11 \
